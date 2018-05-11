@@ -1,9 +1,9 @@
 <template>
   <section class="section">
     <div class="field has-addons">
-      <p class="control has-icons-left">
+      <div class="control has-icons-left">
         <span class="select">
-          <select v-model="protocol">
+          <select v-model="credentials.protocol">
             <option>mqtt://</option>
             <option>mqtts://</option>
           </select>
@@ -11,15 +11,15 @@
             <i class="fas fa-server"></i>
           </span>
         </span>
-      </p>
-      <p class="control">
-        <input v-model="hostname" class="input" type="text" placeholder="Broker hostname">
-      </p>
+      </div>
+      <div class="control">
+        <input v-model="credentials.hostname" class="input" type="text" placeholder="Broker hostname">
+      </div>
     </div>
 
     <div class="field">
       <div class="control has-icons-left">
-        <input v-model="clientId" class="input" type="text" placeholder="Client ID">
+        <input v-model="credentials.clientId" class="input" type="text" placeholder="Client ID">
         <span class="icon is-small is-left">
           <i class="fas fa-id-card"></i>
         </span>
@@ -28,7 +28,7 @@
 
     <div class="field">
       <div class="control has-icons-left">
-        <input v-model="username" class="input" type="text" placeholder="User name">
+        <input v-model="credentials.username" class="input" type="text" placeholder="User name">
         <span class="icon is-small is-left">
           <i class="fas fa-user"></i>
         </span>
@@ -37,7 +37,7 @@
 
     <div class="field">
       <div class="control has-icons-left">
-        <input v-model="password" class="input" type="text" placeholder="Password">
+        <input v-model="credentials.password" class="input" type="text" placeholder="Password">
         <span class="icon is-small is-left">
           <i class="fas fa-key"></i>
         </span>
@@ -46,32 +46,33 @@
 
     <div class="field">
       <div class="control">
-        <input v-model="lwTopic" class="input" type="text" placeholder="Last will topic">
+        <input v-model="credentials.lwTopic" class="input" type="text" placeholder="Last will topic">
       </div>
     </div>
 
     <div class="field">
       <div class="control">
-        <input v-model="lwMessage" class="input" type="text" placeholder="Last will message">
+        <input v-model="credentials.lwMessage" class="input" type="text" placeholder="Last will message">
       </div>
     </div>
 
     <div class="field">
-      <p class="control">
+      <div class="control">
         <span class="select">
-          <select v-model="lwQos">
-            <option>0</option>
-            <option>1</option>
-            <option>2</option>
+          <select v-model="credentials.lwQos">
+            <option value="0">0 - At most once</option>
+            <option value="1">1 - At least once</option>
+            <option value="2">2 - Exactly once</option>
           </select>
         </span>
-      </p>
+      </div>
+      <p class="help">Last Will retian</p>
     </div>
 
     <div class="field">
       <div class="control">
         <label class="checkbox">
-          <input v-model="lwRetain" type="checkbox">
+          <input v-model="credentials.lwRetain" type="checkbox">
           Last will retain
         </label>
       </div>
@@ -79,7 +80,7 @@
 
     <div class="field">
       <div class="control">
-        <button v-on:click="connect" class="button is-primary">
+        <button v-on:click="connect" v-bind:disabled="isButtonDisabled" class="button is-primary">
           Connect
         </button>
       </div>
@@ -88,45 +89,36 @@
 </template>
 
 <script>
-  const mqtt = require('mqtt')
-
   export default {
     data () {
       return {
-        client: null,
-        protocol: 'mqtt://',
-        hostname: 'broker.hivemq.com',
-        clientId: '',
-        username: '',
-        password: '',
-        lwTopic: '',
-        lwMessage: '',
-        lwQos: 0,
-        lwRetain: false
+        credentials: {
+          protocol: this.$store.state.Credentials.credentials.protocol || 'mqtt://',
+          hostname: this.$store.state.Credentials.credentials.hostname || 'broker.hivemq.com',
+          clientId: this.$store.state.Credentials.credentials.clientId || '',
+          username: this.$store.state.Credentials.credentials.username || '',
+          password: this.$store.state.Credentials.credentials.password || '',
+          lwTopic: this.$store.state.Credentials.credentials.lwTopic || '',
+          lwMessage: this.$store.state.Credentials.credentials.lwMessage || '',
+          lwQos: this.$store.state.Credentials.credentials.lwQos || 0,
+          lwRetain: this.$store.state.Credentials.credentials.lwRetain || false
+        }
+      }
+    },
+
+    computed: {
+      isButtonDisabled () {
+        return !this.credentials.protocol ||
+          !this.credentials.hostname ||
+          !this.credentials.clientId
       }
     },
 
     methods: {
-      open (link) {
-        this.$electron.shell.openExternal(link)
-      },
-
       connect () {
-        this.client = mqtt.connect(this.protocol + this.hostname, {
-          clientId: this.clientId,
-          username: this.username,
-          password: this.password,
-          will: {
-            topic: this.lwTopic,
-            payload: this.lwMessage,
-            qos: this.lwQos,
-            retain: this.lwRetain
-          }
-        })
+        this.$store.dispatch('setCredentials', this.credentials)
 
-        this.client.on('connect', function () {
-          console.log('Connected')
-        })
+        this.$router.push('main')
       }
     }
   }
