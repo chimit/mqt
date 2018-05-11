@@ -7,8 +7,8 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'connection-page',
-      component: require('@/components/ConnectionPage').default
+      name: 'start-page',
+      component: require('@/components/StartPage').default
     },
     {
       path: '/main',
